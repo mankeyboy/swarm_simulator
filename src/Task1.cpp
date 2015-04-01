@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 		ROS_INFO("Loop %d", i);
 		while(ros::ok())
  		{
-			if(std::abs(getmodelstate.response.pose.orientation.w) > 0.99)//CHECK IF LOOP IS COMPLETE (Blame double for the 0.99)
+			if((i%2 == 0 && getmodelstate.response.pose.orientation.w < -0.99) || (i%2 == 1 && getmodelstate.response.pose.orientation.w > 0.99))//CHECK IF LOOP IS COMPLETE (Blame double for the 0.99)
 			{
 				break;
 			}
