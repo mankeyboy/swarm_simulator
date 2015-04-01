@@ -1,12 +1,12 @@
 #include "ros/ros.h"
-#include <math.h>
+#include <cmath>
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/String.h"
 #include "gazebo_msgs/ModelState.h"
 #include <gazebo_msgs/GetModelState.h>
 #include <gazebo_msgs/GetWorldProperties.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include "swarm_simulator/obstacleList.h"
 #include "swarm_simulator/obstacleData.h"

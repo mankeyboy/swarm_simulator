@@ -21,13 +21,5 @@ To get started :
 
 To check the published obstacle list : <br />
  $ rostopic echo /obstacleList
-
-->(Task 1) To check for 8 form closed loop motion :
- $ rosrun swarm_simulator loop
-
-->(Task 2) For the simple motion planner :
- $ rosrun swarm_simulator simple_motion_planner
-
-->(Task 3) For the A-star based path implementation :
- $ rosrun swarm_simulator astar
+  
   
