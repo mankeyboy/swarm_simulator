@@ -102,42 +102,21 @@ set(SWARM_SIMU
 	src/swarm_simulator.cpp
 )
 
-set(ASTAR
-	src/Task3.cpp
-)
-
-set(LOOP
-	src/Task1.cpp
-)
-
-set(MOTION_CONTROL
-	src/Task2.cpp
-)
-
 set(SINGLE_BOT
 	src/swarm_bot.cpp
 )
 
 ## Declare a cpp executable
 add_executable(swarm_simulator_node ${SWARM_SIMU})
-add_executable(astar ${ASTAR})
-add_executable(single_bot_node ${SINGLE_BOT})
-add_executable(loop ${LOOP})
-add_executable(simple_path_planner ${MOTION_CONTROL})
-add_dependencies(swarm_simulator_node ${SWARM_SIMU}_generate_messages_cpp)
-add_dependencies(single_bot_node ${SINGLE_BOT}_generate_messages_cpp)
+add_dependencies(swarm_simulator_node ${PROJECT_NAME}_generate_messages_cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(swarm_simulator_node  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(astar  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(single_bot_node  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(loop  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(simple_path_planner ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 ## Declare a cpp executable
-
+add_executable(single_bot_node ${SINGLE_BOT})
 
 ## Specify libraries to link a library or executable target against
-
+target_link_libraries(single_bot_node  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 #############
 ## Install ##
 #############
