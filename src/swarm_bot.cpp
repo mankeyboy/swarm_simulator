@@ -19,6 +19,8 @@ typedef typename nav_msgs::Odometry Odom;
 typedef typename geometry_msgs::Twist Twist;
 
 Pose current_pos; // global updated by callback function
+Pose target_pos; // global updated by callback function
+
 std::vector<swarm_simulator::obstacleData> obstacles; // global updated by callback function
 bool new_obstacles = false;
 bool pos_updated = false;
@@ -71,6 +73,23 @@ void obstacleCB(const swarm_simulator::obstacleList msg) {
   std::cout << "obstacles.size() = " << obstacles.size() << std::endl;
 }
 
+
+void coverageCB(const swarm_simulator::obstacleList msg) {
+  // std::cout << "msg.obstacles.size() = " << msg.obstacles.size() << std::endl;
+
+  // new_obstacles = true;
+
+
+  // obstacles.clear();
+  for(int i = 0; i<msg.obstacles.size(); ++i){
+    if(msg.obstacles[i].shape == id) {
+      target_pos.position.x = msg.obstacles[i].x;
+      target_pos.position.y = msg.obstacles[i].y;
+    }
+  }
+
+  std::cout << " Target  = " << target_pos.position.x << " , " << target_pos.position.y << std::endl;
+}
 
 
 
@@ -299,9 +318,14 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::Publisher vel_pub_0 = n.advertise<geometry_msgs::Twist>("/swarmbot0/cmd_vel", 50);
-  ros::Subscriber odom_data = n.subscribe("/swarmbot0/odom", 50,odomCB);
+  std::stringstream velTopic, odomTopic;
+  odomTopic << "/swarmbot" << id << "/odom";
+  velTopic << "/swarmbot" << id << "/cmd_vel";
+
+  ros::Publisher vel_pub_0 = n.advertise<geometry_msgs::Twist>(velTopic.str(), 50);
+  ros::Subscriber odom_data = n.subscribe(odomTopic.str(), 50, odomCB);
   ros::Subscriber obstacle_data = n.subscribe("/obstacleList", 50, obstacleCB);
+  ros::Subscriber coverage_data = n.subscribe("/coverage", 50, coverageCB);
   ros::Rate loop_rate(50);
 
 
@@ -313,8 +337,8 @@ int main(int argc, char **argv)
   destination.orientation.w = cos(M_PI/2);
   destination.orientation.x = destination.orientation.y = destination.position.z = 0;  
 
-  cmd_vel.linear.x = 0;
-  cmd_vel.angular.z = cmd_vel.angular.y = cmd_vel.angular.x = cmd_vel.linear.y = cmd_vel.linear.z = 0;
+  cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.linear.z = 0;
+  cmd_vel.angular.x = cmd_vel.angular.y = cmd_vel.angular.z = 0;
 
   std::vector<Point> path;
 
@@ -329,17 +353,41 @@ int main(int argc, char **argv)
       loop_rate.sleep();
     }
 
+
+    if(current_pos.position.x > target_pos.position.x - TOL &&
+     current_pos.position.x < target_pos.position.x + TOL &&
+     current_pos.position.y > target_pos.position.y - TOL &&
+     current_pos.position.y < target_pos.position.y + TOL) {
+
+    std::cout << "simu_current_pos = " << current_pos.position.x << ", " << current_pos.position.y << std::endl;
+      std::cout << "simu_target_pos = " << target_pos.position.x << ", " << target_pos.position.y << std::endl;
+
+
+      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.linear.z = 0;
+    cmd_vel.angular.x = cmd_vel.angular.y = cmd_vel.angular.z = 0;
+    vel_pub_0.publish(cmd_vel);
+
+    loop_rate.sleep();
+    continue;
+  }
+
+
+
     //std::cout << "Out of loop" << std::endl;
+
+  long target_x = std::lround((target_pos.position.x + X_MAX / 2) * SCALE);
+  long target_y = std::lround((target_pos.position.y + Y_MAX / 2) * SCALE);
+
+  if(target_x < 0) target_x = 0;
+  if(target_y < 0) target_y = 0;
+  if(target_x >= X_MAX * SCALE) target_x = X_MAX * SCALE - 1;
+  if(target_y >= Y_MAX * SCALE) target_y = Y_MAX * SCALE - 1;
+
 
     if(new_obstacles == true) { //obstacles updated, find new path
       fillMap(obstacles);
 
-
       //printMap();
-
-
-
-
       long current_x = std::lround((current_pos.position.x + X_MAX / 2) * SCALE);
       long current_y = std::lround((current_pos.position.y + Y_MAX / 2) * SCALE);
 
@@ -351,15 +399,14 @@ int main(int argc, char **argv)
       if(current_x >= X_MAX * SCALE) current_x = X_MAX * SCALE - 1;
       if(current_y >= Y_MAX * SCALE) current_y = Y_MAX * SCALE - 1;
 
-      path = AStar(Point(current_x, current_y), Point(X_MAX * SCALE - 1, Y_MAX * SCALE - 1));
+      // path = AStar(Point(current_x, current_y), Point(X_MAX * SCALE - 1, Y_MAX * SCALE - 1));
+      path = AStar(Point(current_x, current_y), Point(target_x, target_y));
 
       printMap();
 
       new_obstacles = false;
 
     }
-
-    
 
     // if (!found_path) {
     //   path = AStar(Point(0, 0), Point(38, 38));
@@ -386,12 +433,21 @@ int main(int argc, char **argv)
       std::cout << "simu_next_pos = " << destination.position.x << ", " << destination.position.y << std::endl;
       std::cout << "map_next_pos = " << target.first << ", " << target.second << std::endl;
 
-      // if(!path.empty()) {
-      //   Point next = path.back();
-      //   double angle = normalizeAngle(atan2(next.second - target.second, next.first - target.first));
-      //   destination.orientation.z = sin(angle/2);
-      //   destination.orientation.w = cos(angle/2);
-      // }
+        // if(!path.empty()) {
+        //   Point next = path.back();
+        //   double angle = normalizeAngle(atan2(next.second - target.second, next.first - target.first));
+        //   destination.orientation.z = sin(angle/2);
+        //   destination.orientation.w = cos(angle/2);
+        // }
+    }
+    else {
+      
+      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.linear.z = 0;
+    cmd_vel.angular.x = cmd_vel.angular.y = cmd_vel.angular.z = 0;
+    vel_pub_0.publish(cmd_vel);
+
+    loop_rate.sleep();
+    continue;
     }
   }
 
