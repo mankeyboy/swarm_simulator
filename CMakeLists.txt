@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(catkin REQUIRED sensor_msgs cv_bridge roscpp std_msgs image_transport)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS thread)
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 ################################################
@@ -118,12 +119,17 @@ set(SINGLE_BOT
 	src/swarm_bot.cpp
 )
 
+set(THREAD_EX
+	src/ros_boost_ex.cpp
+)
+
 ## Declare a cpp executable
 add_executable(swarm_simulator_node ${SWARM_SIMU})
 add_executable(astar ${ASTAR})
 add_executable(single_bot_node ${SINGLE_BOT})
 add_executable(loop ${LOOP})
 add_executable(simple_path_planner ${MOTION_CONTROL})
+add_executable(threading ${THREAD_EX})
 add_dependencies(swarm_simulator_node ${SWARM_SIMU}_generate_messages_cpp)
 add_dependencies(single_bot_node ${SINGLE_BOT}_generate_messages_cpp)
 ## Specify libraries to link a library or executable target against
@@ -132,6 +138,7 @@ target_link_libraries(astar  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(single_bot_node  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(loop  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(simple_path_planner ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(threading ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ## Declare a cpp executable
 
