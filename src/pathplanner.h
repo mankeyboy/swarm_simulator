@@ -179,6 +179,41 @@ std::vector<Point> neighborList(int **map, int X_MAX, int Y_MAX, int SCALE, Poin
   return neighbors;
 }
 
+Point optimized_destination(Point destination, Point source, int **map, int X_MAX, int Y_MAX, int SCALE)
+{
+  if (destination.first >= 0 && destination.first < X_MAX * SCALE && destination.second >= 0 && destination.second < Y_MAX * SCALE)
+  {
+    if(map[destination.first][destination.second] == 1)
+    {
+      Point neighbor;           
+      int limit = 1*SCALE;
+      bool traversed = false;
+      //Checking for free destination: -limit to limit from top-left to bottom-right
+      for(int i = limit; i >= -1*limit; i--)
+      {
+        for(int j = -1*limit; j <= limit; j++)
+        {
+          neighbor = Point(destination.first + j, destination.second + i);
+          if(map[neighbor.first][neighbor.second] != 1)
+            return neighbor;
+          else if(i == -1*limit && j == limit)
+          {//Increase the limit if no free point found
+            limit++;
+            i = limit;
+            j = -1*limit;
+            traversed = true;//Since a few points in the new iteration will already have been covered
+          }
+          else if((i == 0 && j == 0) || (traversed == true && (i != limit || i != -1*limit) && (j != limit || j != -1*limit)))
+            continue;//To prevent useless checking for already checked points
+        }
+      }
+
+    }
+    else return destination;
+  }
+  else return source;
+}
+
 class Comparator{ //functor for ASTAR priority queue
 public:
   static Point destination;
@@ -202,7 +237,8 @@ std::vector<Point> AStar(int **map, int X_MAX, int Y_MAX, int SCALE, Point sourc
   std::map<Point, double>& cost = Comparator::cost;
 
   cost.clear();
-  Comparator::destination = destination;
+
+  Comparator::destination = optimized_destination(destination, source, map, X_MAX, Y_MAX, SCALE);
 
   parent[source] = source;
   cost[source] = 0;
